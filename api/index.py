@@ -98,3 +98,8 @@ def advanced_logger():
 
 if __name__ == "__main__":
     app.run()
+app = Flask(__name__)
+# ... باقي الكود ...
+
+# لا تستخدم app.run() في Vercel، فقط صدّر التطبيق
+app = app
